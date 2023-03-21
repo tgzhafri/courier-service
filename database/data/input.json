@@ -1,0 +1,20 @@
+[
+    {
+        "name": "PKG1",
+        "weight": 5,
+        "distance": 5,
+        "offer_code": "OFR001"
+    },
+    {
+        "name": "PKG2",
+        "weight": 15,
+        "distance": 5,
+        "offer_code": "OFR002"
+    },
+    {
+        "name": "PKG3",
+        "weight": 10,
+        "distance": 100,
+        "offer_code": "OFR003"
+    }
+]
