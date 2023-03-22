@@ -11,12 +11,24 @@ class CourierEstimationCommand extends Command
     const COST_PER_WEIGHT_KG = 10;
     const COST_PER_DISTANCE_KM = 5;
 
+    protected $offer, $data;
+
+    public function __construct()
+    {
+        parent::__construct();
+        $offerJson = File::get("database/data/offer.json");
+        $this->offer = collect(json_decode($offerJson, true));
+
+        $inputJson = File::get("database/data/input.json");
+        $this->data = collect(json_decode($inputJson, true));
+    }
+
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'app:courier-estimate';
+    protected $signature = 'app:courier-estimate {input*}';
 
     /**
      * The console command description.
@@ -30,29 +42,23 @@ class CourierEstimationCommand extends Command
      */
     public function handle()
     {
-        $offerJson = File::get("database/data/offer.json");
-        $offerData = collect(json_decode($offerJson, true));
+        $this->info('Courier service Challenge 1 --started--');
 
-        $inputJson = File::get("database/data/input.json");
-        $inputData = collect(json_decode($inputJson, true));
+        $input = $this->argument('input');
 
-        $data = $inputData->map(function ($item) use ($offerData) {
-            $cost = $this->calculateDeliveryCost($offerData, $item);
+        $data = $this->getData($input);
 
-            $discountPercentage = $this->checkApplicableDiscount($offerData, $item);
+        $data->map(function ($item, $key) {
+            $cost = $this->calculateDeliveryCost($item);
 
-            if ($discountPercentage) {
-                $total = $this->calculateTotalAfterDiscount($cost, $discountPercentage);
-                $discount = $cost - $total;
-            } else {
-                $total = $cost;
-                $discount = 0;
-            }
+            $discount = $this->getApplicableDiscount($item, $cost);
+
+            $total = $cost - $discount;
 
             $this->info($item['name'] . " $discount $total");
         });
 
-        $this->info('Courier service Challenge 1');
+        $this->info('Courier service Challenge 1 --finished--');
     }
 
     /**
@@ -60,7 +66,7 @@ class CourierEstimationCommand extends Command
      *
      * @return int
      */
-    public function calculateDeliveryCost($offerData, $item): int
+    public function calculateDeliveryCost($item): int
     {
         return self::BASE_DELIVERY_COST + $item['weight'] * self::COST_PER_WEIGHT_KG + $item['distance'] * self::COST_PER_DISTANCE_KM;
     }
@@ -70,9 +76,10 @@ class CourierEstimationCommand extends Command
      *
      * @return int
      */
-    public function checkApplicableDiscount($offerData, $item): int
+    public function getApplicableDiscount($item, $cost): int
     {
-        $offerCriteria = $offerData->firstWhere('code', $item['offer_code']);
+        $offerCriteria = $this->offer->firstWhere('code', $item['offer_code']);
+        $discountPercentage = 0;
 
         if (
             $offerCriteria['max_distance'] >= $item['distance']
@@ -80,13 +87,25 @@ class CourierEstimationCommand extends Command
             && $offerCriteria['max_weight'] >= $item['weight']
             && $offerCriteria['min_weight'] <= $item['weight']
         ) {
-            return $offerCriteria['discount'];
+            $discountPercentage = $offerCriteria['discount'];
         }
-        return 0;
+
+        return $this->calculateDiscount($cost, $discountPercentage);
     }
 
-    public function calculateTotalAfterDiscount($total, $discount): int
+    public function calculateDiscount($cost, $discount): int
     {
-        return $total * (100 - $discount) / 100;
+        return $cost *  $discount / 100;
+    }
+
+    public function getData($input): mixed
+    {
+        if ($input && count($input) == 4) {
+            $keys = ['name', 'weight', 'distance', 'offer_code'];
+            $data = collect([array_combine($keys, $input)]);
+        } else {
+            $data = $this->data;
+        }
+        return $data;
     }
 }
