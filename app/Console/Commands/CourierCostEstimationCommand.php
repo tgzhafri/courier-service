@@ -5,7 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 
-class CourierEstimationCommand extends Command
+class CourierCostEstimationCommand extends Command
 {
     const BASE_DELIVERY_COST = 100;
     const COST_PER_WEIGHT_KG = 10;
@@ -19,7 +19,7 @@ class CourierEstimationCommand extends Command
         $offerJson = File::get("database/data/offer.json");
         $this->offer = collect(json_decode($offerJson, true));
 
-        $inputJson = File::get("database/data/input.json");
+        $inputJson = File::get("database/data/input_c1.json");
         $this->data = collect(json_decode($inputJson, true));
     }
 
@@ -28,14 +28,14 @@ class CourierEstimationCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'app:courier-estimate {input*}';
+    protected $signature = 'courier:cost-estimate {input*}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Coding challenge for courier service to get delivery cost estimation with offer and delivery time estimation';
+    protected $description = 'Coding challenge 1 for courier service to get delivery cost estimation with offer';
 
     /**
      * Execute the console command.
@@ -92,7 +92,6 @@ class CourierEstimationCommand extends Command
         ) {
             $discountPercentage = $offerCriteria['discount'];
         }
-        $this->question('Discount not applicable');
         return $this->calculateDiscount($cost, $discountPercentage);
     }
 
