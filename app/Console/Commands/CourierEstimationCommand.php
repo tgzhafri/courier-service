@@ -42,23 +42,25 @@ class CourierEstimationCommand extends Command
      */
     public function handle()
     {
-        $this->info('Courier service Challenge 1 --started--');
+        $this->comment('Courier service Challenge 1 --started--');
 
         $input = $this->argument('input');
 
         $data = $this->getData($input);
 
-        $data->map(function ($item, $key) {
-            $cost = $this->calculateDeliveryCost($item);
+        if ($data) {
+            $data->map(function ($item, $key) {
+                $cost = $this->calculateDeliveryCost($item);
 
-            $discount = $this->getApplicableDiscount($item, $cost);
+                $discount = $this->getApplicableDiscount($item, $cost);
 
-            $total = $cost - $discount;
+                $total = $cost - $discount;
 
-            $this->info($item['name'] . " $discount $total");
-        });
+                $this->info($item['name'] . " $discount $total");
+            });
+        }
 
-        $this->info('Courier service Challenge 1 --finished--');
+        $this->comment('Courier service Challenge 1 --finished--');
     }
 
     /**
@@ -82,14 +84,15 @@ class CourierEstimationCommand extends Command
         $discountPercentage = 0;
 
         if (
-            $offerCriteria['max_distance'] >= $item['distance']
+            $offerCriteria
+            && $offerCriteria['max_distance'] >= $item['distance']
             && $offerCriteria['min_distance'] <= $item['distance']
             && $offerCriteria['max_weight'] >= $item['weight']
             && $offerCriteria['min_weight'] <= $item['weight']
         ) {
             $discountPercentage = $offerCriteria['discount'];
         }
-
+        $this->question('Discount not applicable');
         return $this->calculateDiscount($cost, $discountPercentage);
     }
 
@@ -101,11 +104,19 @@ class CourierEstimationCommand extends Command
     public function getData($input): mixed
     {
         if ($input && count($input) == 4) {
+            if (!is_numeric($input[1]) || !is_numeric($input[2])) {
+                $this->error('input at index 1 and 2 must be an integer');
+                return null;
+            }
+            if (!is_string($input[0]) || !is_string($input[3])) {
+                $this->error('input at index 0 and 3 must be a string');
+                return null;
+            }
+
             $keys = ['name', 'weight', 'distance', 'offer_code'];
-            $data = collect([array_combine($keys, $input)]);
-        } else {
-            $data = $this->data;
+            return collect([array_combine($keys, $input)]);
         }
-        return $data;
+        $this->question('This is default test data');
+        return $this->data;
     }
 }
