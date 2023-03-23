@@ -32,7 +32,7 @@ class CourierCostDeliveryTimeEstimationCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'courier:delivery-estimate {input*}';
+    protected $signature = 'courier:delivery-estimate';
 
     /**
      * The console command description.
@@ -48,9 +48,7 @@ class CourierCostDeliveryTimeEstimationCommand extends Command
     {
         $this->comment('Courier service Challenge 2 --started--');
 
-        $input = $this->argument('input');
-
-        $data = $this->getData($input);
+        $data = $this->data;
 
         if ($data) {
             $result = collect();
@@ -64,9 +62,9 @@ class CourierCostDeliveryTimeEstimationCommand extends Command
                 ];
             }
 
-            $combined = $this->maxLoadPackageCombination($data->toArray());
+            $combined = $this->maxLoadCombination($data->toArray(), self::MAX_WEIGHT);
 
-            // Exclude packages from initial array
+            // Exclude combined packages from initial array of packages
             $combinedPackages = [];
             foreach ($combined as $name) {
                 foreach ($packages as $key => $package) {
@@ -77,6 +75,7 @@ class CourierCostDeliveryTimeEstimationCommand extends Command
                     }
                 }
             }
+
             // Sort packages by distance in descending order
             usort($combinedPackages, function ($a, $b) {
                 return $b["distance"] - $a["distance"];
@@ -105,7 +104,6 @@ class CourierCostDeliveryTimeEstimationCommand extends Command
             usort($packages, function ($a, $b) {
                 return $b["weight"] - $a["weight"];
             });
-            $numOfPackages = count($packages);
             foreach ($packages as $index => $package) {
                 $cost = $this->calculateDeliveryCost($package);
                 $discount = $this->getApplicableDiscount($package, $cost);
@@ -118,7 +116,7 @@ class CourierCostDeliveryTimeEstimationCommand extends Command
                     return $a["return_time"] - $b["return_time"];
                 });
                 foreach ($vehicles as $key => &$vehicle) {
-                    if ($index + 1 == $numOfPackages) {
+                    if ($index + 1 == count($packages)) {
                         $time = $vehicle['return_time'] + $time;
                         $vehicle['return_time'] = $time;
                         break;
@@ -138,7 +136,6 @@ class CourierCostDeliveryTimeEstimationCommand extends Command
                 $this->info($package['name'] . " $discount $total $time");
             }
         }
-
         $this->comment('Courier service Challenge 2 --finished--');
     }
 
@@ -179,26 +176,7 @@ class CourierCostDeliveryTimeEstimationCommand extends Command
         return $cost *  $discount / 100;
     }
 
-    public function getData($input): mixed
-    {
-        if ($input && count($input) == 4) {
-            if (!is_numeric($input[1]) || !is_numeric($input[2])) {
-                $this->error('input at index 1 and 2 must be an integer');
-                return null;
-            }
-            if (!is_string($input[0]) || !is_string($input[3])) {
-                $this->error('input at index 0 and 3 must be a string');
-                return null;
-            }
-
-            $keys = ['name', 'weight', 'distance', 'offer_code'];
-            return collect([array_combine($keys, $input)]);
-        }
-        $this->question('This is default test data');
-        return $this->data;
-    }
-
-    public function getDeliveryTime($item)
+    public function getDeliveryTime($item): float
     {
         $time = $item['distance'] / self::MAX_SPEED;
 
@@ -209,40 +187,31 @@ class CourierCostDeliveryTimeEstimationCommand extends Command
     /**
      * Get the combination of max possible load the vehicle can carry
      *
-     * @param array $nums
-     * @param int $target
-     * @param int $k
+     * @param array $items
+     * @param int $capacity
      * @return array
      */
-    public function maxLoadPackageCombination($packages)
+    public function maxLoadCombination($items, $capacity): array
     {
-        // Sort packages by weight in ascending order
-        usort($packages, function ($a, $b) {
-            return $a["weight"] - $b["weight"];
-        });
+        $n = count($items);
+        $dp = array_fill(0, $capacity + 1, 0);
+        $selected = array_fill(0, $n, 0);
 
-        // Initialize pointers
-        $left = 0;
-        $right = count($packages) - 1;
-
-        // Initialize closest weight sum and combination
-        $closest_sum = -1;
-        $combination = [];
-
-        // Loop through packages
-        while ($left < $right) {
-            $weight_sum = $packages[$left]["weight"] + $packages[$right]["weight"];
-            if ($weight_sum >= 200) {
-                $right--;
-            } else {
-                // Update closest weight sum and combination if necessary
-                if ($weight_sum > $closest_sum) {
-                    $closest_sum = $weight_sum;
-                    $combination = [$packages[$left]['name'], $packages[$right]['name']];
-                }
-                $left++;
+        for ($i = 0; $i < $n; $i++) {
+            for ($j = $capacity; $j >= $items[$i]['weight']; $j--) {
+                $dp[$j] = max($dp[$j], $dp[$j - $items[$i]['weight']] + 1);
             }
         }
-        return $combination;
+
+        $j = $capacity;
+        $result = array();
+        for ($i = $n - 1; $i >= 0; $i--) {
+            if ($j >= $items[$i]['weight'] && $dp[$j] == $dp[$j - $items[$i]['weight']] + 1) {
+                $selected[$i] = 1;
+                $j -= $items[$i]['weight'];
+                $result[] = $items[$i]['name'];
+            }
+        }
+        return $result;
     }
 }

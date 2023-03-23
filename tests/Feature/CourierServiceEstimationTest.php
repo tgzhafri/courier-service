@@ -47,4 +47,17 @@ class CourierServiceEstimationTest extends TestCase
             ->expectsOutput("input at index 1 and 2 must be an integer")
             ->expectsOutput("Courier service Challenge 1 --finished--");
     }
+
+    public function test_courier_delivery_estimation_without_correct_input(): void
+    {
+        $this->artisan('courier:delivery-estimate')
+            ->assertSuccessful()
+            ->expectsOutput("Courier service Challenge 2 --started--")
+            ->expectsOutput("PKG2 0 1475 1.78")
+            ->expectsOutput("PKG4 105 1395 0.85")
+            ->expectsOutput("PKG3 0 2350 1.42")
+            ->expectsOutput("PKG5 0 2125 4.19")
+            ->expectsOutput("PKG1 0 750 3.98")
+            ->expectsOutput("Courier service Challenge 2 --finished--");
+    }
 }
