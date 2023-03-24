@@ -13,9 +13,24 @@ Coding challenge by Everest Engineering
 
 ### Challenge 1 - Cost delivery estimation
 - [CourierCostEstimationCommand.php](https://github.com/tgzhafri/courier-service/blob/main/app/Console/Commands/CourierCostEstimationCommand.php)
+- To run this command, open your console/terminal
+
+``` bash
+# run test command
+$ php artisan courier:cost-estimate test
+
+# to insert input [pkg_id weight distance offer_code]
+$ php artisan courier:cost-estimate PKG5 100 150 OFR001
+```
 
 ### Challenge 2 - Cost and Time delivery estimation
 - [CourierCostDeliveryTimeEstimationCommand.php](https://github.com/tgzhafri/courier-service/blob/main/app/Console/Commands/CourierCostDeliveryTimeEstimationCommand.php)
+- To run this command, open your console/terminal
+
+``` bash
+# run test command
+$ php artisan courier:delivery-estimate
+```
 
 ### Tests
 - [CourierServiceEstimationTest.php](https://github.com/tgzhafri/courier-service/blob/main/tests/Feature/CourierServiceEstimationTest.php)
