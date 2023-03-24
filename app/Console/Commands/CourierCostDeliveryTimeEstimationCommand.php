@@ -15,6 +15,39 @@ class CourierCostDeliveryTimeEstimationCommand extends Command
     const MAX_SPEED = 70;
     const MAX_WEIGHT = 200;
 
+    const TEST_ARRAY_DATA = [
+        [
+            "name" => "PKG1",
+            "weight" => 100,
+            "distance" => 30,
+            "offer_code" => "OFR001"
+        ],
+        [
+            "name" => "PKG2",
+            "weight" => 100,
+            "distance" => 125,
+            "offer_code" => "OFR008"
+        ],
+        [
+            "name" => "PKG3",
+            "weight" => 100,
+            "distance" => 100,
+            "offer_code" => "OFR003"
+        ],
+        [
+            "name" => "PKG4",
+            "weight" => 100,
+            "distance" => 60,
+            "offer_code" => "OFR002"
+        ],
+        [
+            "name" => "PKG5",
+            "weight" => 175,
+            "distance" => 95,
+            "offer_code" => "NA"
+        ],
+    ];
+
     protected $offer, $data;
 
     public function __construct()
@@ -32,7 +65,7 @@ class CourierCostDeliveryTimeEstimationCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'courier:delivery-estimate';
+    protected $signature = 'courier:delivery-estimate {input?}';
 
     /**
      * The console command description.
@@ -48,85 +81,30 @@ class CourierCostDeliveryTimeEstimationCommand extends Command
     {
         $this->comment('Courier service Challenge 2 --started--');
 
-        $data = $this->data->toArray();
+        $data = $this->getData();
+
         $result = collect();
         $vehicles = array();
 
-        // Create vehicles
-        for ($i = 1; $i <= self::NO_OF_VEHICLES; $i++) {
-            array_push($vehicles, ['id' => $i, 'return_time' => 0]);
-        }
+        $this->vehicleList($vehicles);
 
-        // Get the combined packages with maximum weight
-        $combinedPackages = $this->maxLoadCombination($data, self::MAX_WEIGHT);
-
-        // Sort packages by distance in descending order
-        $combinedPackages = collect($combinedPackages);
-        $combinedPackages = collect($data)->whereIn('name', $combinedPackages)->sortByDesc('distance')->values();
-
-        // Process combined packages
-        foreach ($combinedPackages as $index => $package) {
-            $time = $this->getDeliveryTime($package);
-            $cost = $this->calculateDeliveryCost($package);
-            $discount = $this->getApplicableDiscount($package, $cost);
-            $total = $cost - $discount;
-            $returnTime = $time * 2;
-
-            // Assign the package to a vehicle with the earliest return time
-            foreach ($vehicles as &$vehicle) {
-                if ($vehicle['return_time'] == 0 && $index == 0) {
-                    $vehicle['return_time'] = $returnTime;
-                    break;
-                }
-            }
-
-            $merged = array_merge($package, ['cost' => $total, 'time' => $time]);
-            $result->push($merged);
-            $this->info($package['name'] . " $discount $total $time");
-        }
-
-        // Sort packages by weight in descending order
-        $remainingPackages = collect($data)->whereNotIn('name', $combinedPackages->pluck('name')->toArray())->sortByDesc('weight')->values();
-
-        // Process remaining packages
-        foreach ($remainingPackages as $index => $package) {
-            $time = $this->getDeliveryTime($package);
-            $cost = $this->calculateDeliveryCost($package);
-            $discount = $this->getApplicableDiscount($package, $cost);
-            $total = $cost - $discount;
-            $returnTime = $time * 2;
-
-            // Assign the package to a vehicle with the earliest return time
-            usort($vehicles, function ($a, $b) {
-                return $a["return_time"] - $b["return_time"];
-            });
-            foreach ($vehicles as $key => &$vehicle) {
-                if ($index + 1 == count($remainingPackages)) {
-                    $time = $vehicle['return_time'] + $time;
-                    $vehicle['return_time'] = $time;
-                    break;
-                }
-                if ($key == 0 && $vehicle['return_time'] != 0) {
-                    $time = $vehicle['return_time'] + $time;
-                    $vehicle['return_time'] += $returnTime;
-                    break;
-                }
-                if ($vehicle['return_time'] == 0) {
-                    $vehicle['return_time'] = $returnTime;
-                    break;
-                }
-            }
-
-            $merged = array_merge($package, ['cost' => $total, 'time' => $time]);
-            $result->push($merged);
-            $this->info($package['name'] . " $discount $total $time");
-        }
+        $this->calculateDeliveryTime($data, $result, $vehicles);
 
         $this->table(
             ['name', 'weight', 'distance', 'offer_code', 'cost', 'time'],
             $result->sortBy('name')->toArray()
         );
         $this->comment('Courier service Challenge 2 --finished--');
+    }
+
+    public function getData()
+    {
+        $input = $this->argument('input');
+
+        if ($input == 'test') {
+            return self::TEST_ARRAY_DATA;
+        }
+        return $this->data->toArray();
     }
 
     /**
@@ -174,18 +152,29 @@ class CourierCostDeliveryTimeEstimationCommand extends Command
         return floor($time * 100) / 100;
     }
 
+    public function vehicleList(&$vehicles)
+    {
+        // Create vehicles
+        for ($i = 1; $i <= self::NO_OF_VEHICLES; $i++) {
+            array_push($vehicles, ['id' => $i, 'return_time' => 0]);
+        }
+    }
+
     /**
-     * Get the combination of max possible load the vehicle can carry, if there is no possible combination, return the highest weight
-     *
-     * @param array $items
-     * @param int $capacity
-     * @return array
+     * Get the combination of items with maximum weight that can be carried
+     * by a vehicle.
+     * @param array $items The items to select from, with their weight and name.
+     * @param int $capacity The maximum weight that can be carried by a vehicle.
+     * @return array The names of the items that were selected in the optimal combination.
      */
     public function maxLoadCombination(array $items, int $capacity): array
     {
+        /* This is a dynamic programming approach to solve the knapsack problem. */
+        // Initialize an array with the possible maximum weight that can be carried
         $n = count($items);
         $dp = array_fill(0, $capacity + 1, 0);
 
+        // Iterate over the items and their weights, and update the array of possible maximum weights
         for ($i = 0; $i < $n; $i++) {
             for ($j = $capacity; $j >= $items[$i]['weight']; $j--) {
                 $dp[$j] = max($dp[$j], $dp[$j - $items[$i]['weight']] + 1);
@@ -206,6 +195,91 @@ class CourierCostDeliveryTimeEstimationCommand extends Command
                 }
             }
         }
+        // Return the names of the items that were selected in the optimal combination
         return $result;
+    }
+
+    public function calculateDeliveryForCombinedPackages($combinedPackages, $data, $result, &$vehicles): array
+    {
+        collect($combinedPackages);
+        $combinedPackages = collect($data)->whereIn('name', $combinedPackages)->sortByDesc('distance')->values();
+
+        // Process combined packages
+        foreach ($combinedPackages as $index => $package) {
+            $time = $this->getDeliveryTime($package);
+            $cost = $this->calculateDeliveryCost($package);
+            $discount = $this->getApplicableDiscount($package, $cost);
+            $total = $cost - $discount;
+            $returnTime = $time * 2;
+
+            // Assign the package to a vehicle with the earliest return time
+            foreach ($vehicles as &$vehicle) {
+                if ($vehicle['return_time'] == 0 && $index == 0) {
+                    $vehicle['return_time'] = $returnTime;
+                    break;
+                }
+            }
+
+            $merged = array_merge($package, ['cost' => $total, 'time' => $time]);
+            $result->push($merged);
+            $this->info($package['name'] . " $discount $total $time");
+        }
+        return $combinedPackages->toArray();
+    }
+
+    public function calculateDeliveryForSinglePackage($remainingPackages, $result, &$vehicles): void
+    {
+        foreach ($remainingPackages as $index => $package) {
+            $time = $this->getDeliveryTime($package);
+            $cost = $this->calculateDeliveryCost($package);
+            $discount = $this->getApplicableDiscount($package, $cost);
+            $total = $cost - $discount;
+            $returnTime = $time * 2;
+
+            // Assign the package to a vehicle with the earliest return time
+            usort($vehicles, function ($a, $b) {
+                return $a["return_time"] - $b["return_time"];
+            });
+            foreach ($vehicles as $key => &$vehicle) {
+                if ($index + 1 == count($remainingPackages)) {
+                    $time = $vehicle['return_time'] + $time;
+                    $vehicle['return_time'] = $time;
+                    break;
+                }
+                if ($key == 0 && $vehicle['return_time'] != 0) {
+                    $time = $vehicle['return_time'] + $time;
+                    $vehicle['return_time'] += $returnTime;
+                    break;
+                }
+                if ($vehicle['return_time'] == 0) {
+                    $vehicle['return_time'] = $returnTime;
+                    break;
+                }
+            }
+
+            $merged = array_merge($package, ['cost' => $total, 'time' => $time]);
+            $result->push($merged);
+            $this->info($package['name'] . " $discount $total $time");
+        }
+    }
+
+    public function calculateDeliveryTime($data, $result, $vehicles)
+    {
+        // Get the combined packages with maximum weight
+        $combinedPackages = $this->maxLoadCombination($data, self::MAX_WEIGHT);
+
+        // Calculate combined packages
+        $combinedPackages = $this->calculateDeliveryForCombinedPackages($combinedPackages, $data, $result, $vehicles);
+
+        // Sort packages by weight in descending order
+        $remainingPackages = collect($data)->whereNotIn('name', collect($combinedPackages)->pluck('name')->toArray())->sortByDesc('weight')->values();
+
+        if ($remainingPackages->count() > 2) {
+            // Calculate remaining combined packages delivery
+            $this->calculateDeliveryTime($remainingPackages->toArray(), $result, $vehicles);
+        } else {
+            // Calculate remaining packages delivered individually
+            $this->calculateDeliveryForSinglePackage($remainingPackages, $result, $vehicles);
+        }
     }
 }

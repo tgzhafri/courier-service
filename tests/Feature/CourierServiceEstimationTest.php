@@ -48,7 +48,7 @@ class CourierServiceEstimationTest extends TestCase
             ->expectsOutput("Courier service Challenge 1 --finished--");
     }
 
-    public function test_courier_delivery_estimation_without_correct_input(): void
+    public function test_courier_delivery_estimation_without_test_input(): void
     {
         $this->artisan('courier:delivery-estimate')
             ->assertSuccessful()
@@ -58,6 +58,24 @@ class CourierServiceEstimationTest extends TestCase
             ->expectsOutput("PKG3 0 2350 1.42")
             ->expectsOutput("PKG5 0 2125 4.19")
             ->expectsOutput("PKG1 0 750 3.98")
+            ->expectsOutput("Courier service Challenge 2 --finished--");
+    }
+
+    public function test_courier_delivery_estimation_with_test_input(): void
+    {
+        $this->artisan('courier:delivery-estimate test')
+            ->assertSuccessful()
+            ->expectsOutput("Courier service Challenge 2 --started--")
+            ->expectsOutput("PKG2 0 1475 1.78")
+            ->expectsOutput("PKG9 98 1302 0.85")
+            ->expectsOutput("PKG8 147 1328 1.35")
+            ->expectsOutput("PKG1 0 750 0.42")
+            ->expectsOutput("PKG3 80 1520 1.42")
+            ->expectsOutput("PKG4 105 1395 0.85")
+            ->expectsOutput("PKG7 112 1488 0.85")
+            ->expectsOutput("PKG10 0 2125 1.35")
+            ->expectsOutput("PKG6 0 2350 4.98")
+            ->expectsOutput("PKG5 0 775 4.05")
             ->expectsOutput("Courier service Challenge 2 --finished--");
     }
 }
