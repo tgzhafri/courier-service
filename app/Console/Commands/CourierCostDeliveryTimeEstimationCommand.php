@@ -15,71 +15,10 @@ class CourierCostDeliveryTimeEstimationCommand extends Command
     const MAX_SPEED = 70;
     const MAX_WEIGHT = 200;
 
-    const TEST_ARRAY_DATA = [
-        [
-            "name" => "PKG1",
-            "weight" => 10,
-            "distance" => 30,
-            "offer_code" => "OFR001"
-        ],
-        [
-            "name" => "PKG2",
-            "weight" => 69,
-            "distance" => 125,
-            "offer_code" => "OFR008"
-        ],
-        [
-            "name" => "PKG3",
-            "weight" => 100,
-            "distance" => 100,
-            "offer_code" => "OFR003"
-        ],
-        [
-            "name" => "PKG4",
-            "weight" => 100,
-            "distance" => 60,
-            "offer_code" => "OFR002"
-        ],
-        [
-            "name" => "PKG5",
-            "weight" => 175,
-            "distance" => 95,
-            "offer_code" => "NA"
-        ],
-        [
-            "name" => "PKG6",
-            "weight" => 79,
-            "distance" => 125,
-            "offer_code" => "OFR008"
-        ],
-        [
-            "name" => "PKG7",
-            "weight" => 100,
-            "distance" => 100,
-            "offer_code" => "OFR003"
-        ],
-        [
-            "name" => "PKG8",
-            "weight" => 49,
-            "distance" => 60,
-            "offer_code" => "OFR002"
-        ],
-        [
-            "name" => "PKG9",
-            "weight" => 200,
-            "distance" => 95,
-            "offer_code" => "OFR001"
-        ],
-        [
-            "name" => "PKG10",
-            "weight" => 175,
-            "distance" => 95,
-            "offer_code" => "NA"
-        ],
-    ];
-
     protected $offerFilePath = "database/data/offer.json";
-    protected $inputFilePath = "database/data/input_c2.json";
+    protected $inputFilePath = "database/data/input_C2.json";
+    protected $testMissing = "database/data/inputMissingData.json";
+    protected $testMultiple = "database/data/inputMultipleCombinePackages.json";
 
     /**
      * The name and signature of the console command.
@@ -120,14 +59,30 @@ class CourierCostDeliveryTimeEstimationCommand extends Command
 
     public function getData()
     {
-        $data = $this->argument('input') == 'test' ? self::TEST_ARRAY_DATA : $this->parseJsonData($this->inputFilePath);
+        switch ($this->argument('input')) {
+            case null:
+                $data = $this->parseJsonData($this->inputFilePath);
+                break;
+            case 'test-missing':
+                $data = $this->parseJsonData($this->testMissing);
+                break;
+            case 'test-multiple':
+                $data = $this->parseJsonData($this->testMultiple);
+                break;
+            default:
+                $data = $this->parseJsonData($this->inputFilePath);
+                break;
+        }
 
-        return collect($data)->filter(function ($item) {
+        return collect($data)->filter(function ($item, $index) {
+            $this->validateInput($item, $index);
             if (
                 is_string($item['name'])
+                && $item['name'] != ''
                 && is_numeric($item['weight'])
                 && is_numeric($item['weight'])
                 && is_string($item['offer_code'])
+                && $item['offer_code'] != ''
             ) {
                 return $item;
             }
@@ -194,6 +149,36 @@ class CourierCostDeliveryTimeEstimationCommand extends Command
         }
     }
 
+    public function validateInput(array $item, int $index): void
+    {
+        if (
+            !is_string($item['name'])
+            || $item['name'] == ''
+            || !$item['name']
+        ) {
+            $this->error("Index $index, name is missing and must be a string");
+        }
+        if (
+            !is_string($item['offer_code'])
+            || !$item['offer_code']
+            || $item['offer_code'] == ''
+        ) {
+            $this->error("Index $index, offer_code is missing and must be a string");
+        }
+        if (
+            !is_numeric($item['weight'])
+            || !$item['weight']
+        ) {
+            $this->error("Index $index, weight is missing and must be a numeric");
+        }
+        if (
+            !is_numeric($item['distance'])
+            || !$item['distance']
+        ) {
+            $this->error("Index $index, distance is missing and must be a numeric");
+        }
+    }
+
     /**
      * Get the combination of items with maximum weight that can be carried
      * by a vehicle.
@@ -207,7 +192,6 @@ class CourierCostDeliveryTimeEstimationCommand extends Command
         // Initialize an array with the possible maximum weight that can be carried
         $n = count($items);
         $dp = array_fill(0, $capacity + 1, 0);
-
         // Iterate over the items and their weights, and update the array of possible maximum weights
         for ($i = 0; $i < $n; $i++) {
             for ($j = $capacity; $j >= $items[$i]['weight']; $j--) {
@@ -229,6 +213,7 @@ class CourierCostDeliveryTimeEstimationCommand extends Command
                 }
             }
         }
+
         // Return the names of the items that were selected in the optimal combination
         return $result;
     }
@@ -307,7 +292,9 @@ class CourierCostDeliveryTimeEstimationCommand extends Command
         // Sort packages by weight in descending order
         $remainingPackages = collect($data)->whereNotIn('name', collect($combinedPackages)->pluck('name')->toArray())->sortByDesc('weight')->values();
 
-        if ($remainingPackages->count() > 2 && $combinedPackages == []) {
+        // If there is no more combined packages, then calculate each package individually
+        // else recursively calculate for combined packages
+        if ($combinedPackages == []) {
             // Calculate remaining packages delivered individually
             $this->calculateDeliveryForSinglePackage($remainingPackages, $result, $vehicles);
         } else {

@@ -48,7 +48,7 @@ class CourierServiceEstimationTest extends TestCase
             ->expectsOutput("Courier service Challenge 1 --finished--");
     }
 
-    public function test_courier_delivery_estimation_without_test_input(): void
+    public function test_courier_delivery_estimation_without_input(): void
     {
         $this->artisan('courier:delivery-estimate')
             ->assertSuccessful()
@@ -66,16 +66,40 @@ class CourierServiceEstimationTest extends TestCase
         $this->artisan('courier:delivery-estimate test')
             ->assertSuccessful()
             ->expectsOutput("Courier service Challenge 2 --started--")
-            ->expectsOutput("PKG6 0 1515 1.78")
-            ->expectsOutput("PKG7 80 1520 1.42")
+            ->expectsOutput("PKG2 0 1475 1.78")
+            ->expectsOutput("PKG4 105 1395 0.85")
+            ->expectsOutput("PKG3 0 2350 1.42")
+            ->expectsOutput("PKG5 0 2125 4.19")
+            ->expectsOutput("PKG1 0 750 3.98")
+            ->expectsOutput("Courier service Challenge 2 --finished--");
+    }
+
+    public function test_courier_delivery_estimation_with_multiple_combined_packages(): void
+    {
+        $this->artisan('courier:delivery-estimate test-multiple')
+            ->assertSuccessful()
+            ->expectsOutput("Courier service Challenge 2 --started--")
+            ->expectsOutput("PKG2 0 1475 1.78")
+            ->expectsOutput("PKG10 0 1925 7.61")
+            ->expectsOutput("Courier service Challenge 2 --finished--");
+    }
+
+    public function test_courier_delivery_estimation_with_missing_data(): void
+    {
+        $this->artisan('courier:delivery-estimate test-missing')
+            ->assertSuccessful()
+            ->expectsOutput("Courier service Challenge 2 --started--")
+            ->expectsOutput("Index 0, name is missing and must be a string")
+            ->expectsOutput("Index 1, distance is missing and must be a numeric")
+            ->expectsOutput("Index 4, weight is missing and must be a numeric")
+            ->expectsOutput("Index 8, name is missing and must be a string")
+            ->expectsOutput("Index 9, offer_code is missing and must be a string")
+            ->expectsOutput("PKG8 62 1188 1.42")
+            ->expectsOutput("PKG6 0 750 0.42")
+            ->expectsOutput("PKG2 0 850 0")
+            ->expectsOutput("PKG7 0 1725 1.78")
             ->expectsOutput("PKG4 98 1302 0.85")
-            ->expectsOutput("PKG3 80 1520 1.42")
-            ->expectsOutput("PKG9 257 2318 3.05")
-            ->expectsOutput("PKG5 0 2325 5.75")
-            ->expectsOutput("PKG10 0 2325 4.91")
-            ->expectsOutput("PKG2 0 1415 8.04")
-            ->expectsOutput("PKG8 0 890 7.95")
-            ->expectsOutput("PKG1 0 350 9.22")
+            ->expectsOutput("PKG3 0 2350 4.26")
             ->expectsOutput("Courier service Challenge 2 --finished--");
     }
 }
