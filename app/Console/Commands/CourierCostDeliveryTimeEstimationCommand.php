@@ -18,13 +18,13 @@ class CourierCostDeliveryTimeEstimationCommand extends Command
     const TEST_ARRAY_DATA = [
         [
             "name" => "PKG1",
-            "weight" => 100,
+            "weight" => 10,
             "distance" => 30,
             "offer_code" => "OFR001"
         ],
         [
             "name" => "PKG2",
-            "weight" => 100,
+            "weight" => 69,
             "distance" => 125,
             "offer_code" => "OFR008"
         ],
@@ -46,19 +46,40 @@ class CourierCostDeliveryTimeEstimationCommand extends Command
             "distance" => 95,
             "offer_code" => "NA"
         ],
+        [
+            "name" => "PKG6",
+            "weight" => 79,
+            "distance" => 125,
+            "offer_code" => "OFR008"
+        ],
+        [
+            "name" => "PKG7",
+            "weight" => 100,
+            "distance" => 100,
+            "offer_code" => "OFR003"
+        ],
+        [
+            "name" => "PKG8",
+            "weight" => 49,
+            "distance" => 60,
+            "offer_code" => "OFR002"
+        ],
+        [
+            "name" => "PKG9",
+            "weight" => 200,
+            "distance" => 95,
+            "offer_code" => "OFR001"
+        ],
+        [
+            "name" => "PKG10",
+            "weight" => 175,
+            "distance" => 95,
+            "offer_code" => "NA"
+        ],
     ];
 
-    protected $offer, $data;
-
-    public function __construct()
-    {
-        parent::__construct();
-        $offerJson = File::get("database/data/offer.json");
-        $this->offer = collect(json_decode($offerJson, true));
-
-        $inputJson = File::get("database/data/input_c2.json");
-        $this->data = collect(json_decode($inputJson, true));
-    }
+    protected $offerFilePath = "database/data/offer.json";
+    protected $inputFilePath = "database/data/input_c2.json";
 
     /**
      * The name and signature of the console command.
@@ -99,12 +120,24 @@ class CourierCostDeliveryTimeEstimationCommand extends Command
 
     public function getData()
     {
-        $input = $this->argument('input');
+        $data = $this->argument('input') == 'test' ? self::TEST_ARRAY_DATA : $this->parseJsonData($this->inputFilePath);
 
-        if ($input == 'test') {
-            return self::TEST_ARRAY_DATA;
-        }
-        return $this->data->toArray();
+        return collect($data)->filter(function ($item) {
+            if (
+                is_string($item['name'])
+                && is_numeric($item['weight'])
+                && is_numeric($item['weight'])
+                && is_string($item['offer_code'])
+            ) {
+                return $item;
+            }
+        })->toArray();
+    }
+
+    public function parseJsonData($filePath)
+    {
+        $jsonData = File::get($filePath);
+        return json_decode($jsonData, true);
     }
 
     /**
@@ -124,7 +157,8 @@ class CourierCostDeliveryTimeEstimationCommand extends Command
      */
     public function getApplicableDiscount($item, $cost): int
     {
-        $offerCriteria = $this->offer->firstWhere('code', $item['offer_code']);
+        $offer = collect($this->parseJsonData($this->offerFilePath));
+        $offerCriteria = $offer->firstWhere('code', $item['offer_code']);
         $discountPercentage = 0;
 
         if (
@@ -201,7 +235,6 @@ class CourierCostDeliveryTimeEstimationCommand extends Command
 
     public function calculateDeliveryForCombinedPackages($combinedPackages, $data, $result, &$vehicles): array
     {
-        collect($combinedPackages);
         $combinedPackages = collect($data)->whereIn('name', $combinedPackages)->sortByDesc('distance')->values();
 
         // Process combined packages
@@ -274,7 +307,7 @@ class CourierCostDeliveryTimeEstimationCommand extends Command
         // Sort packages by weight in descending order
         $remainingPackages = collect($data)->whereNotIn('name', collect($combinedPackages)->pluck('name')->toArray())->sortByDesc('weight')->values();
 
-        if ($remainingPackages->count() > 2) {
+        if ($remainingPackages->count() > 2 && $combinedPackages == []) {
             // Calculate remaining combined packages delivery
             $this->calculateDeliveryTime($remainingPackages->toArray(), $result, $vehicles);
         } else {
