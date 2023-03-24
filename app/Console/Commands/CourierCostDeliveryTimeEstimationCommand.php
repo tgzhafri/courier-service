@@ -131,7 +131,7 @@ class CourierCostDeliveryTimeEstimationCommand extends Command
             ) {
                 return $item;
             }
-        })->toArray();
+        })->values()->toArray();
     }
 
     public function parseJsonData($filePath)
