@@ -68,14 +68,14 @@ class CourierServiceEstimationTest extends TestCase
             ->expectsOutput("Courier service Challenge 2 --started--")
             ->expectsOutput("PKG6 0 1515 1.78")
             ->expectsOutput("PKG7 80 1520 1.42")
-            ->expectsOutput("PKG9 257 2318 1.35")
-            ->expectsOutput("PKG5 0 2325 4.05")
+            ->expectsOutput("PKG4 98 1302 0.85")
+            ->expectsOutput("PKG3 80 1520 1.42")
+            ->expectsOutput("PKG9 257 2318 3.05")
+            ->expectsOutput("PKG5 0 2325 5.75")
             ->expectsOutput("PKG10 0 2325 4.91")
-            ->expectsOutput("PKG3 80 1520 7.68")
-            ->expectsOutput("PKG4 98 1302 6.25")
-            ->expectsOutput("PKG2 0 1415 8.88")
-            ->expectsOutput("PKG8 0 890 9.95")
-            ->expectsOutput("PKG1 0 350 11.22")
+            ->expectsOutput("PKG2 0 1415 8.04")
+            ->expectsOutput("PKG8 0 890 7.95")
+            ->expectsOutput("PKG1 0 350 9.22")
             ->expectsOutput("Courier service Challenge 2 --finished--");
     }
 }

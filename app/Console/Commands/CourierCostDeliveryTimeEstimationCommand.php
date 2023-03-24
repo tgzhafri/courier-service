@@ -308,11 +308,11 @@ class CourierCostDeliveryTimeEstimationCommand extends Command
         $remainingPackages = collect($data)->whereNotIn('name', collect($combinedPackages)->pluck('name')->toArray())->sortByDesc('weight')->values();
 
         if ($remainingPackages->count() > 2 && $combinedPackages == []) {
-            // Calculate remaining combined packages delivery
-            $this->calculateDeliveryTime($remainingPackages->toArray(), $result, $vehicles);
-        } else {
             // Calculate remaining packages delivered individually
             $this->calculateDeliveryForSinglePackage($remainingPackages, $result, $vehicles);
+        } else {
+            // Calculate remaining combined packages delivery
+            $this->calculateDeliveryTime($remainingPackages->toArray(), $result, $vehicles);
         }
     }
 }
