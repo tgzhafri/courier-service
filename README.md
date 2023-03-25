@@ -30,6 +30,12 @@ $ php artisan courier:cost-estimate PKG5 100 150 OFR001
 ``` bash
 # run test command
 $ php artisan courier:delivery-estimate
+
+# run test command for multiple combined packages delivery
+$ php artisan courier:delivery-estimate test-multiple
+
+# run test command for multiple missing input data
+$ php artisan courier:delivery-estimate test-missing
 ```
 
 ### Tests
