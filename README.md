@@ -21,7 +21,7 @@ $ composer install
 
 # run test to see if it's working
 $ php artisan test
-
+```
 
 ## Courier Service
 
