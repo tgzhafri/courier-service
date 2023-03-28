@@ -17,15 +17,18 @@ class InputValidator
 
         // validate base input
         $validateBase = $this->baseRules($input['base']);
-
-        //validate package input
-        $validatePackage = collect($input['package'])->each(function ($item) {
-            return $this->packageRules($item);
-        });
-
-        if (!$validateBase || !$validatePackage) {
+        if (!$validateBase) {
             return false;
         }
+
+        //validate package input
+        foreach ($input['package'] as $item) {
+            $validated =  $this->packageRules($item);
+            if (!$validated) {
+                return false;
+            }
+        }
+
         return true;
     }
 
@@ -34,16 +37,24 @@ class InputValidator
         if (count($input) != 4) {
             return false;
         }
-
         $name = $input[0];
         $weight = $input[1];
         $distance = $input[2];
         $offerCode = $input[3];
 
-        if (!is_string($name) || !is_numeric($weight) || !is_numeric($distance) || !is_string($offerCode)) {
-            return false;
+        if (
+            is_string($name)
+            && is_numeric($weight)
+            && is_numeric($distance)
+            && is_string($offerCode)
+            && !empty($name)
+            && !empty($weight)
+            && !empty($distance)
+            && !empty($offerCode)
+        ) {
+            return true;
         }
-        return true;
+        return false;
     }
 
     public function baseRules($input): bool

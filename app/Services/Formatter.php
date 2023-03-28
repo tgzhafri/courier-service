@@ -35,7 +35,7 @@ class Formatter
                 } else {
                     // Remove any empty values
                     $values = array_filter($values, function ($value) {
-                        return !empty($value);
+                        return !empty($value) && $value != 'null';
                     });
 
                     // Add the values to the array

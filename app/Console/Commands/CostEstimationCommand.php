@@ -80,11 +80,10 @@ class CostEstimationCommand extends Command
 
             $total = $cost - $discount;
 
+            $this->info($item['name'] . " $discount $total");
+
             $results[] = $this->formatter->formatArray($item, $discount, $total);
-
-            $this->info($this->formatter->formatString($item, $discount, $total));
         }
-
         $this->table(['Name', 'Discount', 'Total'], $results);
 
         $this->comment('Courier service Challenge 1 --finished--');

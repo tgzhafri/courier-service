@@ -18,9 +18,9 @@ class DiscountCalculator
      * @param float $totalCost
      * @return float
      */
-    public function calculate($item, float $cost): float
+    public function calculate($item, $cost): int
     {
-        $discount = 0.0;
+        $discount = 0;
 
         $offer = $this->offerCriteria->getOffer($item);
 
@@ -33,7 +33,7 @@ class DiscountCalculator
             && $offer['min_weight'] <= $item['weight']
         ) {
             // Calculate discount percentage based on offer's discount value
-            $discountPercentage = $offer['discount'] / 100.0;
+            $discountPercentage = $offer['discount'] / 100;
 
             // Calculate the discount amount
             $discount = $cost * $discountPercentage;

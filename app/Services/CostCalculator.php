@@ -18,9 +18,9 @@ class CostCalculator
     {
         $weight = $package['weight'];
         $distance = $package['distance'];
+        $baseDelivery = $base['base_cost_delivery'] ?? self::BASE_COST_DELIVERY;
 
-        $cost = $base['base_delivery_cost'] ?? self::BASE_COST_DELIVERY
-            + ($weight * self::COST_PER_WEIGHT_KG) + ($distance * self::COST_PER_DISTANCE_KM);
+        $cost = $baseDelivery + ($weight * self::COST_PER_WEIGHT_KG) + ($distance * self::COST_PER_DISTANCE_KM);
 
         return $cost;
     }

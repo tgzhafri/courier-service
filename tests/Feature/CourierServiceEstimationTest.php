@@ -11,17 +11,9 @@ class CourierServiceEstimationTest extends TestCase
     /**
      * A basic feature test example.
      */
-    public function test_courier_estimation_command_without_correct_input(): void
+    public function test_cost_estimation_without_input_return_default_data(): void
     {
-        $this->artisan('courier:cost-estimate test')
-            ->assertSuccessful()
-            ->expectsOutput("Courier service Challenge 1 --started--")
-            ->expectsOutput("PKG1 0 175")
-            ->expectsOutput("PKG2 0 275")
-            ->expectsOutput("PKG3 35 665")
-            ->expectsOutput("Courier service Challenge 1 --finished--");
-
-        $this->artisan('courier:cost-estimate test 123 1231 123 123123 123')
+        $this->artisan('courier:cost-estimate')
             ->assertSuccessful()
             ->expectsOutput("Courier service Challenge 1 --started--")
             ->expectsOutput("PKG1 0 175")
@@ -30,22 +22,82 @@ class CourierServiceEstimationTest extends TestCase
             ->expectsOutput("Courier service Challenge 1 --finished--");
     }
 
-    public function test_courier_estimation_command_with_correct_input(): void
+    public function test_cost_estimation_with_correct_multiple_package_input(): void
     {
-        $this->artisan('courier:cost-estimate PKG5 100 150 OFR001')
+        $this->artisan("courier:cost-estimate '100 3
+            PKG1 5 5 OFR001
+            PKG2 15 5 OFR002
+            PKG3 10 100 OFR003'")
             ->assertSuccessful()
             ->expectsOutput("Courier service Challenge 1 --started--")
-            ->expectsOutput("PKG5 185 1665")
+            ->expectsOutput("PKG1 0 175")
+            ->expectsOutput("PKG2 0 275")
+            ->expectsOutput("PKG3 35 665")
             ->expectsOutput("Courier service Challenge 1 --finished--");
     }
 
-    public function test_courier_estimation_command_with_wrong_input(): void
+    public function test_cost_estimation_with_correct_multiple_single_input(): void
+    {
+        $this->artisan("courier:cost-estimate '100 3
+            PKG3 10 100 OFR003'")
+            ->assertSuccessful()
+            ->expectsOutput("Courier service Challenge 1 --started--")
+            ->expectsOutput("PKG3 35 665")
+            ->expectsOutput("Courier service Challenge 1 --finished--");
+    }
+
+    public function test_cost_estimation_with_wrong_input(): void
     {
         $this->artisan('courier:cost-estimate PKG5 abc def xyz')
             ->assertSuccessful()
             ->expectsOutput("Courier service Challenge 1 --started--")
-            ->expectsOutput("input at index 1 and 2 must be an integer")
-            ->expectsOutput("Courier service Challenge 1 --finished--");
+            ->expectsOutput("Invalid input");
+
+        $this->artisan("courier:cost-estimate '100 3 234 2
+            PKG1 5 5 OFR001
+            PKG2 15 5 OFR002
+            PKG3 10 100 OFR003'")
+            ->assertSuccessful()
+            ->expectsOutput("Courier service Challenge 1 --started--")
+            ->expectsOutput("Invalid input");
+    }
+
+    public function test_cost_estimation_with_incomplete_input(): void
+    {
+        $this->artisan("courier:cost-estimate '100 3
+            null 5 OFR001
+            PKG2 15 null OFR002
+            PKG3 10 100 OFR003'")
+            ->assertSuccessful()
+            ->expectsOutput("Courier service Challenge 1 --started--")
+            ->expectsOutput("Invalid input");
+    }
+
+    public function test_cost_estimation_with_missing_base_input(): void
+    {
+        $this->artisan("courier:cost-estimate '
+            null 5 OFR001
+            PKG2 15 null OFR002
+            PKG3 10 100 OFR003'")
+            ->assertSuccessful()
+            ->expectsOutput("Courier service Challenge 1 --started--")
+            ->expectsOutput("Invalid input");
+
+        $this->artisan("courier:cost-estimate '
+            PKG1 5 5 OFR001
+            PKG2 15 5 OFR002
+            PKG3 10 100 OFR003'")
+            ->assertSuccessful()
+            ->expectsOutput("Courier service Challenge 1 --started--")
+            ->expectsOutput("Invalid input");
+    }
+
+    public function test_cost_estimation_with_missing_package_input(): void
+    {
+        $this->artisan("courier:cost-estimate '100 3'")
+            ->assertSuccessful()
+            ->expectsOutput("Courier service Challenge 1 --started--")
+            ->expectsOutput("Invalid input");
     }
 
     public function test_courier_delivery_estimation_without_input(): void
