@@ -7,9 +7,13 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
+# Courier Service
+
+Coding challenge by Everest Engineering
+
 ## Installation
 
-````bash
+```bash
 # clone the repo
 $ git clone https://github.com/tgzhafri/courier-service.git courier-service
 
@@ -21,11 +25,9 @@ $ composer install
 
 # run test to see if it's working
 $ php artisan test
+
 ```
 
-## Courier Service
-
-Coding challenge by Everest Engineering
 ### Challenge 1 - Cost delivery estimation
 
 -   [CostEstimationCommand.php](https://github.com/tgzhafri/courier-service/blob/main/app/Console/Commands/CostEstimationCommand.php)
@@ -46,7 +48,7 @@ $ php artisan courier:cost-estimate
     PKG1 5 5 OFR001
     PKG2 15 5 OFR002
     PKG3 10 100 OFR003"
-````
+```
 
 ### Challenge 2 - Cost and Time delivery estimation
 
@@ -74,12 +76,8 @@ $ php artisan courier:delivery-estimate
     2 70 200"
 ```
 
-### Tests
+### Test files
 
 -   [CourierServiceCostEstimationTest.php](https://github.com/tgzhafri/courier-service/blob/main/tests/Feature/CourierServiceCostEstimationTest.php)
 
 -   [CourierServiceTimeEstimationTest.php](https://github.com/tgzhafri/courier-service/blob/main/tests/Feature/CourierServiceTimeEstimationTest.php)
-
-```
-
-```
