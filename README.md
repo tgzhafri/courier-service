@@ -12,22 +12,28 @@
 Coding challenge by Everest Engineering
 
 ### Challenge 1 - Cost delivery estimation
-- [CourierCostEstimationCommand.php](https://github.com/tgzhafri/courier-service/blob/main/app/Console/Commands/CourierCostEstimationCommand.php)
-- To run this command, open your console/terminal
 
-``` bash
+-   [CostEstimationCommand.php](https://github.com/tgzhafri/courier-service/blob/main/app/Console/Commands/CostEstimationCommand.php)
+-   To run this command, open your console/terminal
+
+```bash
 # run test command
-$ php artisan courier:cost-estimate test
+$ php artisan courier:cost-estimate
 
 # to insert input [pkg_id weight distance offer_code]
-$ php artisan courier:cost-estimate PKG5 100 150 OFR001
+$ php artisan courier:cost-estimate
+    "100 3
+    PKG1 5 5 OFR001
+    PKG2 15 5 OFR002
+    PKG3 10 100 OFR003"
 ```
 
 ### Challenge 2 - Cost and Time delivery estimation
-- [CourierCostDeliveryTimeEstimationCommand.php](https://github.com/tgzhafri/courier-service/blob/main/app/Console/Commands/CourierCostDeliveryTimeEstimationCommand.php)
-- To run this command, open your console/terminal
 
-``` bash
+-   [TimeEstimationCommand.php](https://github.com/tgzhafri/courier-service/blob/main/app/Console/Commands/TimeEstimationCommand.php)
+-   To run this command, open your console/terminal
+
+```bash
 # run test command
 $ php artisan courier:delivery-estimate
 
@@ -39,11 +45,12 @@ $ php artisan courier:delivery-estimate test-missing
 ```
 
 ### Tests
-- [CourierServiceEstimationTest.php](https://github.com/tgzhafri/courier-service/blob/main/tests/Feature/CourierServiceEstimationTest.php)
+
+-   [CourierServiceEstimationTest.php](https://github.com/tgzhafri/courier-service/blob/main/tests/Feature/CourierServiceEstimationTest.php)
 
 ## Installation
 
-``` bash
+```bash
 # clone the repo
 $ git clone https://github.com/tgzhafri/courier-service.git courier-service
 
@@ -57,5 +64,3 @@ $ composer install
 $ php artisan test
 
 ```
-
-

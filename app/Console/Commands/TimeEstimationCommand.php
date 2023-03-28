@@ -5,7 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 
-class CourierCostDeliveryTimeEstimationCommand extends Command
+class TimeEstimationCommand extends Command
 {
     const BASE_DELIVERY_COST = 100;
     const COST_PER_WEIGHT_KG = 10;
