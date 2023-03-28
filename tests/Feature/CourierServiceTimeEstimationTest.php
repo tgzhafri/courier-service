@@ -27,11 +27,11 @@ class CourierServiceTimeEstimationTest extends TestCase
             2 70 200'")
             ->assertSuccessful()
             ->expectsOutput("Courier service Challenge 2 --started--")
-            ->expectsOutput("PKG2 0 1475 1.78")
-            ->expectsOutput("PKG4 105 1395 0.85")
-            ->expectsOutput("PKG3 0 2350 1.42")
-            ->expectsOutput("PKG5 0 2125 4.19")
             ->expectsOutput("PKG1 0 750 3.98")
+            ->expectsOutput("PKG2 0 1475 1.78")
+            ->expectsOutput("PKG3 0 2350 1.42")
+            ->expectsOutput("PKG4 105 1395 0.85")
+            ->expectsOutput("PKG5 0 2125 4.19")
             ->expectsOutput("Courier service Challenge 2 --finished--");
     }
 
@@ -52,11 +52,11 @@ class CourierServiceTimeEstimationTest extends TestCase
             2 70 200'")
             ->assertSuccessful()
             ->expectsOutput("Courier service Challenge 2 --started--")
-            ->expectsOutput("PKG2 0 1475 1.78")
-            ->expectsOutput("PKG4 105 1395 0.85")
-            ->expectsOutput("PKG3 0 2350 1.42")
-            ->expectsOutput("PKG5 0 2125 4.19")
             ->expectsOutput("PKG1 0 750 3.98")
+            ->expectsOutput("PKG2 0 1475 1.78")
+            ->expectsOutput("PKG3 0 2350 1.42")
+            ->expectsOutput("PKG4 105 1395 0.85")
+            ->expectsOutput("PKG5 0 2125 4.19")
             ->expectsOutput("Courier service Challenge 2 --finished--");
     }
 
@@ -68,11 +68,11 @@ class CourierServiceTimeEstimationTest extends TestCase
             PKG4 110 60 OFR002 PKG5 155 95 NA 2 70 200'")
             ->assertSuccessful()
             ->expectsOutput("Courier service Challenge 2 --started--")
-            ->expectsOutput("PKG2 0 1475 1.78")
-            ->expectsOutput("PKG4 105 1395 0.85")
-            ->expectsOutput("PKG3 0 2350 1.42")
-            ->expectsOutput("PKG5 0 2125 4.19")
             ->expectsOutput("PKG1 0 750 3.98")
+            ->expectsOutput("PKG2 0 1475 1.78")
+            ->expectsOutput("PKG3 0 2350 1.42")
+            ->expectsOutput("PKG4 105 1395 0.85")
+            ->expectsOutput("PKG5 0 2125 4.19")
             ->expectsOutput("Courier service Challenge 2 --finished--");
     }
 
@@ -112,11 +112,11 @@ class CourierServiceTimeEstimationTest extends TestCase
             123456 70 200'")
             ->assertSuccessful()
             ->expectsOutput("Courier service Challenge 2 --started--")
-            ->expectsOutput("PKG2 0 1475 1.78")
-            ->expectsOutput("PKG4 105 1395 0.85")
-            ->expectsOutput("PKG3 0 2350 1.42")
-            ->expectsOutput("PKG5 0 2125 4.19")
             ->expectsOutput("PKG1 0 750 3.98")
+            ->expectsOutput("PKG2 0 1475 1.78")
+            ->expectsOutput("PKG3 0 2350 1.42")
+            ->expectsOutput("PKG4 105 1395 0.85")
+            ->expectsOutput("PKG5 0 2125 4.19")
             ->expectsOutput("Courier service Challenge 2 --finished--");
     }
 
