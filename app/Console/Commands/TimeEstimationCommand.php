@@ -90,7 +90,7 @@ class TimeEstimationCommand extends Command
         $this->comment('Courier service Challenge 2 --finished--');
     }
 
-    public function calculateDeliveryTime($data, $result, $vehicles, $base)
+    public function calculateDeliveryTime($data, $result, $vehicles, $base): void
     {
         // Get the combined packages with maximum weight
         $combinedPackages = $this->maxLoadCombination($data, $base['max_weight']);
