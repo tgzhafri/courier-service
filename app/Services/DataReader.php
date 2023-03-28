@@ -20,9 +20,12 @@ class DataReader
             $data = json_decode($dataJson, true);
         } else {
             $data['base'] = array_combine(['base_delivery_cost', 'no_of_packages',], $array['base']);
-            collect($array['package'])->each(function ($item) use (&$data) {
-                return $data['package'][] = array_combine(['name', 'weight', 'distance', 'offer_code'], $item);
+            collect($array['packages'])->each(function ($item) use (&$data) {
+                return $data['packages'][] = array_combine(['name', 'weight', 'distance', 'offer_code'], $item);
             });
+            if (isset($array['vehicle'])) {
+                $data['vehicle'] = array_combine(['no_of_vehicles', 'max_speed', 'max_weight'], $array['vehicle']);
+            }
         }
 
         return $data;

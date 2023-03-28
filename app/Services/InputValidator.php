@@ -11,7 +11,7 @@ class InputValidator
         }
 
         // check if data formatted correctly
-        if (!isset($input['base']) || !isset($input['package'])) {
+        if (!isset($input['base']) || !isset($input['packages'])) {
             return false;
         }
 
@@ -22,9 +22,16 @@ class InputValidator
         }
 
         //validate package input
-        foreach ($input['package'] as $item) {
+        foreach ($input['packages'] as $item) {
             $validated =  $this->packageRules($item);
             if (!$validated) {
+                return false;
+            }
+        }
+
+        if (isset($input['vehicle'])) {
+            $validateVehicle = $this->vehicleRules($input['vehicle']);
+            if (!$validateVehicle) {
                 return false;
             }
         }
@@ -67,6 +74,22 @@ class InputValidator
         $numOfPackages = $input[1];
 
         if (!is_numeric($baseDeliveryCost) || !is_numeric($numOfPackages)) {
+            return false;
+        }
+        return true;
+    }
+
+    public function vehicleRules($input): bool
+    {
+        if (count($input) != 3) {
+            return false;
+        }
+
+        $numOfVehicles = $input[0];
+        $maxSpeed = $input[1];
+        $maxWeight = $input[2];
+
+        if (!is_numeric($numOfVehicles) || !is_numeric($maxSpeed) || !is_numeric($maxWeight)) {
             return false;
         }
         return true;

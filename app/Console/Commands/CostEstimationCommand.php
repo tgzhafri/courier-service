@@ -58,7 +58,7 @@ class CostEstimationCommand extends Command
         $input = $this->argument('input');
 
         if (!empty($input)) {
-            $input = $this->formatter->stringToArray($input[0]);
+            $input = $this->formatter->costInputToArray($input[0]);
 
             if (!$this->inputValidator->validate($input)) {
                 return $this->error('Invalid input');
@@ -73,7 +73,7 @@ class CostEstimationCommand extends Command
 
         $results = array();
 
-        foreach ($data['package'] ?? $data as $item) {
+        foreach ($data['packages'] ?? $data as $item) {
             $cost = $this->costCalculator->calculate($item, $data['base'] ?? null);
 
             $discount = $this->discountCalculator->calculate($item, $cost);

@@ -2,37 +2,53 @@
 
 namespace App\Console\Commands;
 
+use App\Services\CostCalculator;
+use App\Services\DataReader;
+use App\Services\DiscountCalculator;
+use App\Services\InputValidator;
+use App\Services\Formatter;
+use App\Services\Vehicle;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\File;
 
 class TimeEstimationCommand extends Command
 {
-    const BASE_DELIVERY_COST = 100;
-    const COST_PER_WEIGHT_KG = 10;
-    const COST_PER_DISTANCE_KM = 5;
+    protected $inputValidator;
+    protected $dataReader;
+    protected $costCalculator;
+    protected $discountCalculator;
+    protected $formatter;
+    protected $vehicle;
 
-    const NO_OF_VEHICLES = 2;
-    const MAX_SPEED = 70;
-    const MAX_WEIGHT = 200;
-
-    protected $offerFilePath = "database/data/offer.json";
-    protected $inputFilePath = "database/data/input_C2.json";
-    protected $testMissing = "database/data/inputMissingData.json";
-    protected $testMultiple = "database/data/inputMultipleCombinePackages.json";
+    public function __construct(
+        InputValidator $inputValidator,
+        DataReader $dataReader,
+        CostCalculator $costCalculator,
+        DiscountCalculator $discountCalculator,
+        Formatter $formatter,
+        Vehicle $vehicle,
+    ) {
+        parent::__construct();
+        $this->inputValidator = $inputValidator;
+        $this->dataReader = $dataReader;
+        $this->costCalculator = $costCalculator;
+        $this->discountCalculator = $discountCalculator;
+        $this->formatter = $formatter;
+        $this->vehicle = $vehicle;
+    }
 
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'courier:delivery-estimate {input?}';
+    protected $signature = 'courier:delivery-estimate {input*} ';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Coding challenge 2 for courier service to get delivery cost estimation with offer and delivery time estimation';
+    protected $description = 'Coding challenge 2 for courier service to get delivery time estimation';
 
     /**
      * Execute the console command.
@@ -41,142 +57,67 @@ class TimeEstimationCommand extends Command
     {
         $this->comment('Courier service Challenge 2 --started--');
 
-        $data = $this->getData();
-
+        $input = $this->argument('input');
+        $formatted = array();
         $result = collect();
-        $vehicles = array();
 
-        $this->vehicleList($vehicles);
+        if (!empty($input)) {
+            $formatted = $this->formatter->timeInputToArray($input[0]);
+            if (!$this->inputValidator->validate($formatted)) {
+                return $this->error('Invalid input');
+            }
+        }
 
-        $this->calculateDeliveryTime($data, $result, $vehicles);
+        $data = $this->dataReader->readData($formatted);
+
+        if (empty($data)) {
+            return $this->error('Data is empty');
+        }
+
+        if (!isset($data['vehicle'])) {
+            return $this->error('Vehicle base data is required');
+        }
+        $baseVehicle = $data['vehicle'];
+        $vehicles = $this->vehicle->list($baseVehicle['no_of_vehicles']);
+
+        $this->calculateDeliveryTime($data['packages'] ?? $data, $result, $vehicles, $baseVehicle);
 
         $this->table(
             ['name', 'weight', 'distance', 'offer_code', 'cost', 'time'],
             $result->sortBy('name')->toArray()
         );
+
         $this->comment('Courier service Challenge 2 --finished--');
     }
 
-    public function getData()
+    public function calculateDeliveryTime($data, $result, $vehicles, $base)
     {
-        switch ($this->argument('input')) {
-            case null:
-                $data = $this->parseJsonData($this->inputFilePath);
-                break;
-            case 'test-missing':
-                $data = $this->parseJsonData($this->testMissing);
-                break;
-            case 'test-multiple':
-                $data = $this->parseJsonData($this->testMultiple);
-                break;
-            default:
-                $data = $this->parseJsonData($this->inputFilePath);
-                break;
+        // Get the combined packages with maximum weight
+        $combinedPackages = $this->maxLoadCombination($data, $base['max_weight']);
+
+        // Calculate combined packages
+        $combinedPackages = $this->calculateDeliveryForCombinedPackages($combinedPackages, $data, $result, $vehicles, $base);
+
+        // Sort packages by weight in descending order
+        $remainingPackages = collect($data)->whereNotIn('name', collect($combinedPackages)->pluck('name')->toArray())->sortByDesc('weight')->values();
+
+        // If there is no more combined packages, then calculate each package individually
+        // else recursively calculate for combined packages
+        if ($combinedPackages == []) {
+            // Calculate remaining packages delivered individually
+            $this->calculateDeliveryForSinglePackage($remainingPackages, $result, $vehicles, $base);
+        } else {
+            // Calculate remaining combined packages delivery
+            $this->calculateDeliveryTime($remainingPackages->toArray(), $result, $vehicles, $base);
         }
-
-        return collect($data)->filter(function ($item, $index) {
-            $this->validateInput($item, $index);
-            if (
-                is_string($item['name'])
-                && $item['name'] != ''
-                && is_numeric($item['weight'])
-                && is_numeric($item['weight'])
-                && is_string($item['offer_code'])
-                && $item['offer_code'] != ''
-            ) {
-                return $item;
-            }
-        })->values()->toArray();
     }
 
-    public function parseJsonData($filePath)
+    public function getDeliveryTime($item, $base): float
     {
-        $jsonData = File::get($filePath);
-        return json_decode($jsonData, true);
-    }
-
-    /**
-     * Delivery cost calculation = Base Delivery Cost + (Package Total Weight * 10) + (Distance to Destination * 5)
-     *
-     * @return int
-     */
-    public function calculateDeliveryCost($item): int
-    {
-        return self::BASE_DELIVERY_COST + $item['weight'] * self::COST_PER_WEIGHT_KG + $item['distance'] * self::COST_PER_DISTANCE_KM;
-    }
-
-    /**
-     *  check if discount applicable based on distance and weight criteria
-     *
-     * @return int
-     */
-    public function getApplicableDiscount($item, $cost): int
-    {
-        $offer = collect($this->parseJsonData($this->offerFilePath));
-        $offerCriteria = $offer->firstWhere('code', $item['offer_code']);
-        $discountPercentage = 0;
-
-        if (
-            $offerCriteria
-            && $offerCriteria['max_distance'] >= $item['distance']
-            && $offerCriteria['min_distance'] <= $item['distance']
-            && $offerCriteria['max_weight'] >= $item['weight']
-            && $offerCriteria['min_weight'] <= $item['weight']
-        ) {
-            $discountPercentage = $offerCriteria['discount'];
-        }
-        return $this->calculateDiscount($cost, $discountPercentage);
-    }
-
-    public function calculateDiscount($cost, $discount): int
-    {
-        return $cost *  $discount / 100;
-    }
-
-    public function getDeliveryTime($item): float
-    {
-        $time = $item['distance'] / self::MAX_SPEED;
+        $time = $item['distance'] / $base['max_speed'];
 
         // to round down answer to 2 decimal places
         return floor($time * 100) / 100;
-    }
-
-    public function vehicleList(&$vehicles)
-    {
-        // Create vehicles
-        for ($i = 1; $i <= self::NO_OF_VEHICLES; $i++) {
-            array_push($vehicles, ['id' => $i, 'return_time' => 0]);
-        }
-    }
-
-    public function validateInput(array $item, int $index): void
-    {
-        if (
-            !is_string($item['name'])
-            || $item['name'] == ''
-            || !$item['name']
-        ) {
-            $this->error("Index $index, name is missing and must be a string");
-        }
-        if (
-            !is_string($item['offer_code'])
-            || !$item['offer_code']
-            || $item['offer_code'] == ''
-        ) {
-            $this->error("Index $index, offer_code is missing and must be a string");
-        }
-        if (
-            !is_numeric($item['weight'])
-            || !$item['weight']
-        ) {
-            $this->error("Index $index, weight is missing and must be a numeric");
-        }
-        if (
-            !is_numeric($item['distance'])
-            || !$item['distance']
-        ) {
-            $this->error("Index $index, distance is missing and must be a numeric");
-        }
     }
 
     /**
@@ -218,15 +159,15 @@ class TimeEstimationCommand extends Command
         return $result;
     }
 
-    public function calculateDeliveryForCombinedPackages($combinedPackages, $data, $result, &$vehicles): array
+    public function calculateDeliveryForCombinedPackages($combinedPackages, $data, $result, &$vehicles, $base): array
     {
-        $combinedPackages = collect($data)->whereIn('name', $combinedPackages)->sortByDesc('distance')->values();
+        $packages = collect($data)->whereIn('name', $combinedPackages)->sortByDesc('distance')->values();
 
         // Process combined packages
-        foreach ($combinedPackages as $index => $package) {
-            $time = $this->getDeliveryTime($package);
-            $cost = $this->calculateDeliveryCost($package);
-            $discount = $this->getApplicableDiscount($package, $cost);
+        foreach ($packages as $index => $package) {
+            $time = $this->getDeliveryTime($package, $base);
+            $cost = $this->costCalculator->calculate($package, $data['base'] ?? null);
+            $discount = $this->discountCalculator->calculate($package, $cost);
             $total = $cost - $discount;
             $returnTime = $time * 2;
 
@@ -242,15 +183,15 @@ class TimeEstimationCommand extends Command
             $result->push($merged);
             $this->info($package['name'] . " $discount $total $time");
         }
-        return $combinedPackages->toArray();
+        return $packages->toArray();
     }
 
-    public function calculateDeliveryForSinglePackage($remainingPackages, $result, &$vehicles): void
+    public function calculateDeliveryForSinglePackage($remainingPackages, $result, &$vehicles, $base): void
     {
         foreach ($remainingPackages as $index => $package) {
-            $time = $this->getDeliveryTime($package);
-            $cost = $this->calculateDeliveryCost($package);
-            $discount = $this->getApplicableDiscount($package, $cost);
+            $time = $this->getDeliveryTime($package, $base);
+            $cost = $this->costCalculator->calculate($package, $data['base'] ?? null);
+            $discount = $this->discountCalculator->calculate($package, $cost);
             $total = $cost - $discount;
             $returnTime = $time * 2;
 
@@ -278,28 +219,6 @@ class TimeEstimationCommand extends Command
             $merged = array_merge($package, ['cost' => $total, 'time' => $time]);
             $result->push($merged);
             $this->info($package['name'] . " $discount $total $time");
-        }
-    }
-
-    public function calculateDeliveryTime($data, $result, $vehicles)
-    {
-        // Get the combined packages with maximum weight
-        $combinedPackages = $this->maxLoadCombination($data, self::MAX_WEIGHT);
-
-        // Calculate combined packages
-        $combinedPackages = $this->calculateDeliveryForCombinedPackages($combinedPackages, $data, $result, $vehicles);
-
-        // Sort packages by weight in descending order
-        $remainingPackages = collect($data)->whereNotIn('name', collect($combinedPackages)->pluck('name')->toArray())->sortByDesc('weight')->values();
-
-        // If there is no more combined packages, then calculate each package individually
-        // else recursively calculate for combined packages
-        if ($combinedPackages == []) {
-            // Calculate remaining packages delivered individually
-            $this->calculateDeliveryForSinglePackage($remainingPackages, $result, $vehicles);
-        } else {
-            // Calculate remaining combined packages delivery
-            $this->calculateDeliveryTime($remainingPackages->toArray(), $result, $vehicles);
         }
     }
 }
