@@ -17,10 +17,15 @@ Coding challenge by Everest Engineering
 -   To run this command, open your console/terminal
 
 ```bash
-# run test command
-$ php artisan courier:cost-estimate
+# run command with inputs
 
-# to insert input [pkg_id weight distance offer_code]
+# input formats
+# base_delivery_cost no_of_packges
+# pkg_id1 pkg_weight1_in_kg distance1_in_km offer_code1
+# ...
+
+# other format of input or missing input will throw an error 'Invalid input'
+# example input
 $ php artisan courier:cost-estimate
     "100 3
     PKG1 5 5 OFR001
@@ -34,19 +39,31 @@ $ php artisan courier:cost-estimate
 -   To run this command, open your console/terminal
 
 ```bash
-# run test command
+# run command with inputs
+
+# input formats
+# base_delivery_cost no_of_packges
+# pkg_id1 pkg_weight1_in_kg distance1_in_km offer_code1
+# ....
+# no_of_vehicles max_speed max_carriable_weight
+
+# other format of input or missing input will throw an error 'Invalid input'
+# example input
 $ php artisan courier:delivery-estimate
-
-# run test command for multiple combined packages delivery
-$ php artisan courier:delivery-estimate test-multiple
-
-# run test command for multiple missing input data
-$ php artisan courier:delivery-estimate test-missing
+    "100 5
+    PKG1 50 30 OFR001
+    PKG2 75 125 OFR008
+    PKG3 175 100 OFR003
+    PKG4 110 60 OFR002
+    PKG5 155 95 NA
+    2 70 200"
 ```
 
 ### Tests
 
--   [CourierServiceEstimationTest.php](https://github.com/tgzhafri/courier-service/blob/main/tests/Feature/CourierServiceEstimationTest.php)
+-   [CourierServiceCostEstimationTest.php](https://github.com/tgzhafri/courier-service/blob/main/tests/Feature/CourierServiceCostEstimationTest.php)
+
+-   [CourierServiceTimeEstimationTest.php](https://github.com/tgzhafri/courier-service/blob/main/tests/Feature/CourierServiceTimeEstimationTest.php)
 
 ## Installation
 
