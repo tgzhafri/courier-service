@@ -56,25 +56,24 @@ class Formatter
         // Loop through the lines and split each line into individual values
         $array = [];
         foreach ($lines as $index => $line) {
-            if (empty($line)) {
-                break;
-            }
-            // remove white space front and back of the string before explode into array
-            $values = explode(" ", trim($line));
+            if (!empty($line)) {
+                // remove white space front and back of the string before explode into array
+                $values = explode(" ", trim($line));
 
-            if ($index == 0) {
-                // separate Base Input (first index)
-                $array['base'] = array_values($values);
-            } elseif ($index + 1 == count($lines)) {
-                // separate Vehicle Input (last index)
-                $array['vehicle'] = array_values($values);
-            } else {
-                // Remove any empty values
-                $values = array_filter($values, function ($value) {
-                    return !empty($value) && $value != 'null';
-                });
-                // Add the values to the array
-                $array['packages'][] = array_values($values);
+                if ($index == 0) {
+                    // separate Base Input (first index)
+                    $array['base'] = array_values($values);
+                } elseif ($index + 1 == count($lines)) {
+                    // separate Vehicle Input (last index)
+                    $array['vehicle'] = array_values($values);
+                } else {
+                    // Remove any empty values
+                    $values = array_filter($values, function ($value) {
+                        return !empty($value) && $value != 'null';
+                    });
+                    // Add the values to the array
+                    $array['packages'][] = array_values($values);
+                }
             }
         }
         return $array;

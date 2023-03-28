@@ -58,6 +58,8 @@ class InputValidator
             && !empty($weight)
             && !empty($distance)
             && !empty($offerCode)
+            && $weight > 0
+            && $distance > 0
         ) {
             return true;
         }
@@ -73,10 +75,17 @@ class InputValidator
         $baseDeliveryCost = $input[0];
         $numOfPackages = $input[1];
 
-        if (!is_numeric($baseDeliveryCost) || !is_numeric($numOfPackages)) {
-            return false;
+        if (
+            is_numeric($baseDeliveryCost)
+            && is_numeric($numOfPackages)
+            && !empty($numOfPackages)
+            && !empty($baseDeliveryCost)
+            && $baseDeliveryCost > 0
+            && $numOfPackages > 0
+        ) {
+            return true;
         }
-        return true;
+        return false;
     }
 
     public function vehicleRules($input): bool
@@ -89,9 +98,19 @@ class InputValidator
         $maxSpeed = $input[1];
         $maxWeight = $input[2];
 
-        if (!is_numeric($numOfVehicles) || !is_numeric($maxSpeed) || !is_numeric($maxWeight)) {
-            return false;
+        if (
+            is_numeric($numOfVehicles)
+            && is_numeric($maxSpeed)
+            && is_numeric($maxWeight)
+            && !empty($numOfVehicles)
+            && !empty($maxSpeed)
+            && !empty($maxWeight)
+            && $numOfVehicles > 0
+            && $maxSpeed > 0
+            && $maxWeight > 0
+        ) {
+            return true;
         }
-        return true;
+        return false;
     }
 }

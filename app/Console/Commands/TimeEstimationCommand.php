@@ -61,11 +61,14 @@ class TimeEstimationCommand extends Command
         $formatted = array();
         $result = collect();
 
-        if (!empty($input)) {
-            $formatted = $this->formatter->timeInputToArray($input[0]);
-            if (!$this->inputValidator->validate($formatted)) {
-                return $this->error('Invalid input');
-            }
+        if (empty($input)) {
+            return $this->error('Input array is required');
+        }
+
+        $formatted = $this->formatter->timeInputToArray($input[0]);
+
+        if (!$this->inputValidator->validate($formatted)) {
+            return $this->error('Invalid input');
         }
 
         $data = $this->dataReader->readData($formatted);

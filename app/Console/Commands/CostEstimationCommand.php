@@ -57,15 +57,17 @@ class CostEstimationCommand extends Command
 
         $input = $this->argument('input');
 
-        if (!empty($input)) {
-            $input = $this->formatter->costInputToArray($input[0]);
-
-            if (!$this->inputValidator->validate($input)) {
-                return $this->error('Invalid input');
-            }
+        if (empty($input)) {
+            return $this->error('Invalid input');
         }
 
-        $data = $this->dataReader->readData($input, $this->inputFilePath);
+        $formatted = $this->formatter->costInputToArray($input[0]);
+
+        if (!$this->inputValidator->validate($formatted)) {
+            return $this->error('Invalid input');
+        }
+
+        $data = $this->dataReader->readData($formatted, $this->inputFilePath);
 
         if (empty($data)) {
             return $this->error('Data is empty');
