@@ -56,7 +56,6 @@ class CostEstimationCommand extends Command
         $this->comment('Courier service Challenge 1 --started--');
 
         $input = $this->argument('input');
-
         if (empty($input)) {
             return $this->error('Invalid input');
         }

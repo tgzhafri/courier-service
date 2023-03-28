@@ -113,10 +113,7 @@ class CourierServiceCostEstimationTest extends TestCase
             PKG3 10214234 100 OFR003'")
             ->assertSuccessful()
             ->expectsOutput("Courier service Challenge 1 --started--")
-            ->expectsOutput("PKG1 0 175")
-            ->expectsOutput("PKG2 0 275")
-            ->expectsOutput("PKG3 35 665")
-            ->expectsOutput("Courier service Challenge 1 --finished--");
+            ->expectsOutput("Invalid input");
     }
 
     public function test_delivery_cost_estimation_with_spacing_in_input(): void
@@ -147,9 +144,6 @@ class CourierServiceCostEstimationTest extends TestCase
             PKG2 15 5 OFR002   PKG3 10 100 OFR003'")
             ->assertSuccessful()
             ->expectsOutput("Courier service Challenge 1 --started--")
-            ->expectsOutput("PKG1 0 175")
-            ->expectsOutput("PKG2 0 275")
-            ->expectsOutput("PKG3 35 665")
-            ->expectsOutput("Courier service Challenge 1 --finished--");
+            ->expectsOutput("Invalid input");
     }
 }

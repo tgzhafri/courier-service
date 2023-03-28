@@ -4,6 +4,8 @@ namespace App\Services;
 
 class InputValidator
 {
+    private const MAX_INT = 999;
+
     public function validate(array $input): bool
     {
         if (empty($input)) {
@@ -35,7 +37,6 @@ class InputValidator
                 return false;
             }
         }
-
         return true;
     }
 
@@ -60,6 +61,8 @@ class InputValidator
             && !empty($offerCode)
             && $weight > 0
             && $distance > 0
+            && $weight < self::MAX_INT
+            && $distance < self::MAX_INT
         ) {
             return true;
         }
@@ -82,6 +85,8 @@ class InputValidator
             && !empty($baseDeliveryCost)
             && $baseDeliveryCost > 0
             && $numOfPackages > 0
+            && $baseDeliveryCost < self::MAX_INT
+            && $numOfPackages < self::MAX_INT
         ) {
             return true;
         }
@@ -108,6 +113,9 @@ class InputValidator
             && $numOfVehicles > 0
             && $maxSpeed > 0
             && $maxWeight > 0
+            && $numOfVehicles < self::MAX_INT
+            && $maxSpeed < self::MAX_INT
+            && $maxWeight < self::MAX_INT
         ) {
             return true;
         }
